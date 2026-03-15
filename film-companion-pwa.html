@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="manifest" href="./manifest.json">
+    <title>Film Companion</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: rgba(58, 58, 58, 0.6);
+            --border-color: #4a4a4a;
+            --text-primary: #e8e8e8;
+            --text-secondary: #999;
+            --text-tertiary: #666;
+            --accent: #d4af37;
+            --accent-hover: #e6c14d;
+            --overlay-texture: rgba(255, 255, 255, 0.03);
+        }
+
+        body.light-theme {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --border-color: #d0d0d0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555;
+            --text-tertiary: #888;
+            --accent: #c49b2c;
+            --accent-hover: #b38a1f;
+            --overlay-texture: rgba(0, 0, 0, 0.02);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            position: relative;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                var(--overlay-texture) 2px,
+                var(--overlay-texture) 4px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #app {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--accent);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            color: var(--accent);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 22px;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover, .btn-primary:active {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-ghost:hover, .btn-ghost:active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 1001;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .rolls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .roll-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .roll-card:hover, .roll-card:active {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+        }
+
+        .roll-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .roll-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .roll-card-body h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .roll-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .roll-meta span {
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state svg {
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            margin: 10px 0;
+        }
+
+        .empty-hint {
+            font-size: 14px;
+            color: var(--text-tertiary);
+        }
+
+        .roll-info {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        input, textarea {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            padding: 14px 15px;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            width: 100%;
+            min-height: 44px;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-full {
+            grid-column: 1 / -1;
+        }
+
+        .frames-section {
+            margin-top: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .frames-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .frame-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .frame-card:hover {
+            border-color: var(--accent);
+        }
+
+        .frame-photo {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .frame-info {
+            padding: 15px;
+        }
+
+        .frame-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .frame-settings {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .frame-location {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .frame-notes {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .film-info-banner {
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            border-radius: 4px;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .film-info-banner strong {
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .btn-camera {
+            background: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            color: var(--accent);
+            padding: 40px;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 200px;
+            width: 100%;
+        }
+
+        .btn-camera:hover, .btn-camera:active {
+            border-color: var(--accent);
+            background: var(--bg-card);
+        }
+
+        .camera-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        .photo-preview {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            display: block;
+        }
+
+        .btn-retake {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-primary);
+            opacity: 0.95;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 16px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .camera-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+        }
+
+        .camera-view.active {
+            display: flex;
+        }
+
+        .camera-controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 102;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+        }
+
+        .camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .viewfinder-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 101;
+        }
+
+        .viewfinder-frame {
+            position: relative;
+            border: 2px solid #d4af37;
+            transition: all 0.3s;
+        }
+
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #d4af37;
+        }
+
+        .corner.tl {
+            top: -3px;
+            left: -3px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .corner.tr {
+            top: -3px;
+            right: -3px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .corner.bl {
+            bottom: -3px;
+            left: -3px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .corner.br {
+            bottom: -3px;
+            right: -3px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .focal-indicator {
+            position: absolute;
+            bottom: -40px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #d4af37;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .btn-capture {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 102;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .capture-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-capture:active .capture-ring {
+            transform: scale(0.95);
+        }
+
+        .capture-inner {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .icon-large {
+            width: 32px;
+            height: 32px;
+        }
+
+        .icon-xl {
+            width: 64px;
+            height: 64px;
+        }
+
+        @media (max-width: 768px) {
+            .rolls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .roll-info {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .film-info-banner {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <svg id="theme-icon" width="24" height="24">
+            <circle cx="12" cy="12" r="5" fill="currentColor"/>
+            <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
+            <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/>
+            <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/>
+            <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/>
+        </svg>
+    </button>
+
+    <div class="save-indicator" id="save-indicator">SAVED ✓</div>
+
+    <div id="app"></div>
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+
+        // Theme Management
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+        }
+
+        // Show save indicator
+        function showSaveIndicator() {
+            const indicator = document.getElementById('save-indicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // SVG Icons
+        const icons = {
+            film: '<svg class="icon-large"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>',
+            filmSmall: '<svg><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>',
+            filmXL: '<svg class="icon-xl"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>',
+            plus: '<svg><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+            chevronLeft: '<svg><polyline points="15 18 9 12 15 6"/></svg>',
+            download: '<svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+            trash: '<svg><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+            camera: '<svg><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+            cameraLarge: '<svg class="icon-large"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+            mapPin: '<svg style="width:14px;height:14px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+            save: '<svg><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>'
+        };
+
+        // State
+        let state = {
+            rolls: [],
+            currentRoll: null,
+            view: 'rolls',
+            newFrame: {
+                frameNumber: '',
+                focalLength: '',
+                aperture: '',
+                shutterSpeed: '',
+                notes: '',
+                location: null,
+                photo: null
+            },
+            cameraStream: null,
+            facingMode: 'environment'
+        };
+
+        // Improved localStorage with error handling
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('filmRolls');
+                if (saved) {
+                    state.rolls = JSON.parse(saved);
+                    console.log('Loaded', state.rolls.length, 'rolls');
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert('Error loading saved data. Starting fresh.');
+                state.rolls = [];
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('filmRolls', JSON.stringify(state.rolls));
+                showSaveIndicator();
+                console.log('Saved', state.rolls.length, 'rolls');
+                return true;
+            } catch (error) {
+                console.error('Error saving data:', error);
+                alert('Error saving data! Please check storage space.');
+                return false;
+            }
+        }
+
+        // Create new roll
+        function createNewRoll() {
+            const today = new Date().toISOString().split('T')[0];
+            state.currentRoll = {
+                id: Date.now(),
+                title: '',
+                date: today,
+                filmType: '',
+                iso: '',
+                frames: [],
+                createdAt: new Date().toISOString()
+            };
+            state.view = 'roll-detail';
+            render();
+        }
+
+        // Save roll with verification
+        function saveRoll(roll) {
+            state.rolls = state.rolls.filter(r => r.id !== roll.id);
+            state.rolls.push(roll);
+            state.rolls.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+            state.currentRoll = roll;
+            return saveData();
+        }
+
+        // Delete roll
+        function deleteRoll(rollId) {
+            if (confirm('Delete this roll? This cannot be undone.')) {
+                state.rolls = state.rolls.filter(r => r.id !== rollId);
+                state.currentRoll = null;
+                state.view = 'rolls';
+                saveData();
+                render();
+            }
+        }
+
+        // Get location
+        async function getLocation() {
+            return new Promise((resolve) => {
+                if ('geolocation' in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            resolve({
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy
+                            });
+                        },
+                        (error) => {
+                            console.log('Location unavailable:', error.message);
+                            resolve(null);
+                        },
+                        { timeout: 10000, enableHighAccuracy: true }
+                    );
+                } else {
+                    resolve(null);
+                }
+            });
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: state.facingMode }
+                });
+                state.cameraStream = stream;
+                
+                const video = document.getElementById('camera-video');
+                video.srcObject = stream;
+                
+                document.getElementById('camera-view').classList.add('active');
+                updateViewfinder();
+            } catch (err) {
+                console.error('Camera error:', err);
+                alert('Camera access denied or unavailable: ' + err.message);
+            }
+        }
+
+        function stopCamera() {
+            if (state.cameraStream) {
+                state.cameraStream.getTracks().forEach(track => track.stop());
+                state.cameraStream = null;
+            }
+            document.getElementById('camera-view').classList.remove('active');
+        }
+
+        function toggleCamera() {
+            state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+            stopCamera();
+            setTimeout(startCamera, 100);
+        }
+
+        function calculateCropFactor(focalLength) {
+            if (focalLength <= 35) return 1.0;
+            if (focalLength <= 50) return 1.2;
+            if (focalLength <= 85) return 1.5;
+            if (focalLength <= 135) return 2.0;
+            return 2.5;
+        }
+
+        function updateViewfinder() {
+            const frame = document.getElementById('viewfinder-frame');
+            const indicator = document.getElementById('focal-indicator');
+            
+            if (state.newFrame.focalLength) {
+                const cropFactor = calculateCropFactor(parseInt(state.newFrame.focalLength));
+                const size = Math.max(30, 100 / cropFactor);
+                frame.style.width = size + '%';
+                frame.style.height = size + '%';
+                indicator.textContent = state.newFrame.focalLength + 'mm';
+                indicator.style.display = 'block';
+            } else {
+                frame.style.width = '80%';
+                frame.style.height = '80%';
+                indicator.style.display = 'none';
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('canvas');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            // Apply crop based on focal length
+            if (state.newFrame.focalLength) {
+                const cropFactor = calculateCropFactor(parseInt(state.newFrame.focalLength));
+                const cropWidth = canvas.width / cropFactor;
+                const cropHeight = canvas.height / cropFactor;
+                const x = (canvas.width - cropWidth) / 2;
+                const y = (canvas.height - cropHeight) / 2;
+                
+                const imageData = ctx.getImageData(x, y, cropWidth, cropHeight);
+                canvas.width = cropWidth;
+                canvas.height = cropHeight;
+                ctx.putImageData(imageData, 0, 0);
+            }
+            
+            state.newFrame.photo = canvas.toDataURL('image/jpeg', 0.8);
+            stopCamera();
+            state.view = 'new-frame';
+            render();
+        }
+
+        // Add frame with better error handling
+        async function addFrame() {
+            if (!state.currentRoll) {
+                alert('Error: No roll selected');
+                return;
+            }
+            
+            const location = await getLocation();
+            const frame = {
+                id: Date.now(),
+                frameNumber: state.newFrame.frameNumber || (state.currentRoll.frames.length + 1).toString(),
+                focalLength: state.newFrame.focalLength,
+                aperture: state.newFrame.aperture,
+                shutterSpeed: state.newFrame.shutterSpeed,
+                notes: state.newFrame.notes,
+                location: location,
+                photo: state.newFrame.photo,
+                timestamp: new Date().toISOString()
+            };
+
+            state.currentRoll.frames.push(frame);
+            
+            if (saveRoll(state.currentRoll)) {
+                // Reset form
+                state.newFrame = {
+                    frameNumber: '',
+                    focalLength: '',
+                    aperture: '',
+                    shutterSpeed: '',
+                    notes: '',
+                    location: null,
+                    photo: null
+                };
+                
+                state.view = 'roll-detail';
+                render();
+            } else {
+                alert('Failed to save frame. Please try again.');
+            }
+        }
+
+        // Export roll (keeping existing implementation)
+        async function exportRoll(roll) {
+            // Create text log
+            let logText = `Film Roll Export\n`;
+            logText += `================\n\n`;
+            if (roll.title) {
+                logText += `Title: ${roll.title}\n`;
+            }
+            if (roll.date) {
+                logText += `Date: ${roll.date}\n`;
+            }
+            logText += `Film Type: ${roll.filmType}\n`;
+            logText += `ISO: ${roll.iso}\n`;
+            logText += `Created: ${new Date(roll.createdAt).toLocaleString()}\n`;
+            logText += `Total Frames: ${roll.frames.length}\n\n`;
+            
+            roll.frames.forEach((frame) => {
+                logText += `Frame ${frame.frameNumber}\n`;
+                logText += `-----------\n`;
+                logText += `Focal Length: ${frame.focalLength}mm\n`;
+                logText += `Aperture: f/${frame.aperture}\n`;
+                logText += `Shutter Speed: ${frame.shutterSpeed}\n`;
+                if (frame.location) {
+                    logText += `Location: ${frame.location.latitude}, ${frame.location.longitude}\n`;
+                }
+                if (frame.notes) {
+                    logText += `Notes: ${frame.notes}\n`;
+                }
+                logText += `Timestamp: ${new Date(frame.timestamp).toLocaleString()}\n\n`;
+            });
+
+            // Create HTML export with embedded images
+            let htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${roll.title || roll.filmType || 'Film Roll'} - Export</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e8e8e8;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            border-bottom: 3px solid #d4af37;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        h1 {
+            color: #d4af37;
+            font-size: 32px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .roll-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #999;
+        }
+        .roll-meta span {
+            display: flex;
+            gap: 8px;
+        }
+        .roll-meta strong {
+            color: #d4af37;
+        }
+        .frames {
+            display: grid;
+            gap: 40px;
+        }
+        .frame {
+            background: rgba(58, 58, 58, 0.6);
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+        .frame-photo {
+            width: 100%;
+            display: block;
+            background: #000;
+        }
+        .frame-info {
+            padding: 20px;
+        }
+        .frame-number {
+            font-size: 24px;
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .frame-settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #4a4a4a;
+        }
+        .setting {
+            font-size: 13px;
+        }
+        .setting-label {
+            color: #888;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        .setting-value {
+            color: #e8e8e8;
+            font-size: 16px;
+            margin-top: 3px;
+        }
+        .frame-location {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+        .frame-notes {
+            font-size: 14px;
+            color: #ccc;
+            line-height: 1.6;
+            font-style: italic;
+        }
+        .timestamp {
+            font-size: 11px;
+            color: #666;
+            margin-top: 10px;
+        }
+        @media print {
+            body { background: white; color: black; }
+            .frame { border: 1px solid #ccc; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>${roll.title || roll.filmType || 'Film Roll Export'}</h1>
+            <div class="roll-meta">
+                ${roll.date ? `<span><strong>Date:</strong>${roll.date}</span>` : ''}
+                ${roll.filmType ? `<span><strong>Film:</strong>${roll.filmType}</span>` : ''}
+                ${roll.iso ? `<span><strong>ISO:</strong>${roll.iso}</span>` : ''}
+                <span><strong>Frames:</strong>${roll.frames.length}</span>
+                <span><strong>Created:</strong>${new Date(roll.createdAt).toLocaleDateString()}</span>
+            </div>
+        </div>
+        <div class="frames">
+`;
+
+            roll.frames.forEach((frame) => {
+                htmlContent += `
+            <div class="frame">
+                ${frame.photo ? `<img src="${frame.photo}" alt="Frame ${frame.frameNumber}" class="frame-photo">` : ''}
+                <div class="frame-info">
+                    <div class="frame-number">Frame #${frame.frameNumber}</div>
+                    <div class="frame-settings">
+                        <div class="setting">
+                            <div class="setting-label">Focal Length</div>
+                            <div class="setting-value">${frame.focalLength}mm</div>
+                        </div>
+                        <div class="setting">
+                            <div class="setting-label">Aperture</div>
+                            <div class="setting-value">f/${frame.aperture}</div>
+                        </div>
+                        <div class="setting">
+                            <div class="setting-label">Shutter Speed</div>
+                            <div class="setting-value">${frame.shutterSpeed}</div>
+                        </div>
+                    </div>
+                    ${frame.location ? `
+                    <div class="frame-location">
+                        📍 ${frame.location.latitude.toFixed(6)}, ${frame.location.longitude.toFixed(6)}
+                    </div>` : ''}
+                    ${frame.notes ? `<div class="frame-notes">${frame.notes}</div>` : ''}
+                    <div class="timestamp">${new Date(frame.timestamp).toLocaleString()}</div>
+                </div>
+            </div>
+`;
+            });
+
+            htmlContent += `
+        </div>
+    </div>
+</body>
+</html>`;
+
+            // Download HTML file
+            const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+            const htmlUrl = URL.createObjectURL(htmlBlob);
+            const htmlLink = document.createElement('a');
+            htmlLink.href = htmlUrl;
+            htmlLink.download = `roll-${roll.id}-${roll.title || 'export'}.html`;
+            htmlLink.click();
+
+            // Download text log
+            const logBlob = new Blob([logText], { type: 'text/plain' });
+            const logUrl = URL.createObjectURL(logBlob);
+            const logLink = document.createElement('a');
+            logLink.href = logUrl;
+            logLink.download = `roll-${roll.id}-log.txt`;
+            logLink.click();
+
+            // Download individual photos
+            for (let i = 0; i < roll.frames.length; i++) {
+                const frame = roll.frames[i];
+                if (frame.photo) {
+                    const link = document.createElement('a');
+                    link.href = frame.photo;
+                    link.download = `roll-${roll.id}-frame-${frame.frameNumber}.jpg`;
+                    link.click();
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            alert('Export complete! Check your downloads for:\n• HTML file (with embedded images)\n• Text log\n• Individual JPEGs');
+        }
+
+        // Render functions
+        function renderRollsList() {
+            return `
+                <div class="header">
+                    <div class="header-content">
+                        ${icons.film}
+                        <h1>Film Rolls</h1>
+                    </div>
+                    <button class="btn-primary" onclick="createNewRoll()">
+                        ${icons.plus}
+                        New Roll
+                    </button>
+                </div>
+                <div class="rolls-grid">
+                    ${state.rolls.length === 0 ? `
+                        <div class="empty-state">
+                            ${icons.filmXL}
+                            <p>No rolls yet</p>
+                            <p class="empty-hint">Start by creating your first film roll</p>
+                        </div>
+                    ` : state.rolls.map(roll => `
+                        <div class="roll-card" onclick="openRoll(${roll.id})">
+                            <div class="roll-card-header">
+                                ${icons.filmSmall}
+                                <span class="roll-date">${roll.date || new Date(roll.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div class="roll-card-body">
+                                <h3>${roll.title || roll.filmType || 'Untitled Roll'}</h3>
+                                <div class="roll-meta">
+                                    <span>${roll.filmType || 'No film type'}</span>
+                                    <span>ISO ${roll.iso || '—'}</span>
+                                    <span>${roll.frames.length} frames</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderRollDetail() {
+            if (!state.currentRoll) return '';
+            
+            return `
+                <div class="header">
+                    <button class="btn-ghost" onclick="backToRolls()">
+                        ${icons.chevronLeft}
+                        Back
+                    </button>
+                    <div class="header-actions">
+                        <button class="btn-ghost" onclick="exportRoll(state.currentRoll)">
+                            ${icons.download}
+                        </button>
+                        <button class="btn-ghost" onclick="deleteRoll(${state.currentRoll.id})">
+                            ${icons.trash}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="roll-info">
+                    <input
+                        type="text"
+                        class="input-full"
+                        placeholder="Roll Title (e.g., Summer Trip, Street Photography)"
+                        value="${state.currentRoll.title}"
+                        onchange="updateRollTitle(this.value)"
+                    />
+                    <input
+                        type="date"
+                        placeholder="Date"
+                        value="${state.currentRoll.date}"
+                        onchange="updateRollDate(this.value)"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Film Type (e.g., Kodak Portra 400)"
+                        value="${state.currentRoll.filmType}"
+                        onchange="updateRollFilmType(this.value)"
+                    />
+                    <input
+                        type="text"
+                        placeholder="ISO"
+                        value="${state.currentRoll.iso}"
+                        onchange="updateRollISO(this.value)"
+                    />
+                </div>
+
+                <div class="frames-section">
+                    <div class="section-header">
+                        <h2>Frames (${state.currentRoll.frames.length})</h2>
+                        <button class="btn-primary" onclick="startNewFrame()">
+                            ${icons.plus}
+                            Add Frame
+                        </button>
+                    </div>
+
+                    <div class="frames-list">
+                        ${state.currentRoll.frames.map(frame => `
+                            <div class="frame-card">
+                                ${frame.photo ? `<img src="${frame.photo}" alt="Frame ${frame.frameNumber}" class="frame-photo" />` : ''}
+                                <div class="frame-info">
+                                    <div class="frame-number">#${frame.frameNumber}</div>
+                                    <div class="frame-settings">
+                                        <span>${frame.focalLength}mm</span>
+                                        <span>f/${frame.aperture}</span>
+                                        <span>${frame.shutterSpeed}</span>
+                                    </div>
+                                    ${frame.location ? `
+                                        <div class="frame-location">
+                                            ${icons.mapPin}
+                                            <span>${frame.location.latitude.toFixed(6)}, ${frame.location.longitude.toFixed(6)}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${frame.notes ? `<div class="frame-notes">${frame.notes}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNewFrame() {
+            return `
+                <div class="header">
+                    <button class="btn-ghost" onclick="cancelNewFrame()">
+                        ${icons.chevronLeft}
+                        Cancel
+                    </button>
+                    <h2>New Frame</h2>
+                </div>
+
+                <div class="form">
+                    ${state.currentRoll ? `
+                        <div class="film-info-banner">
+                            <span><strong>Film:</strong>${state.currentRoll.filmType || 'Not specified'}</span>
+                            <span><strong>ISO:</strong>${state.currentRoll.iso || '—'}</span>
+                        </div>
+                    ` : ''}
+
+                    ${state.newFrame.photo ? `
+                        <div class="photo-preview">
+                            <img src="${state.newFrame.photo}" alt="Frame preview" />
+                            <button class="btn-ghost btn-retake" onclick="retakePhoto()">
+                                Retake
+                            </button>
+                        </div>
+                    ` : `
+                        <button class="btn-camera" onclick="startCamera()">
+                            ${icons.cameraLarge}
+                            <span>Take Reference Photo</span>
+                            ${state.newFrame.focalLength ? `<span class="camera-hint">Will simulate ${state.newFrame.focalLength}mm field of view</span>` : ''}
+                        </button>
+                    `}
+
+                    <div class="form-grid">
+                        <input
+                            type="text"
+                            placeholder="Frame # (auto)"
+                            value="${state.newFrame.frameNumber}"
+                            oninput="updateFrameField('frameNumber', this.value)"
+                        />
+                        <input
+                            type="number"
+                            placeholder="Focal Length (mm)"
+                            value="${state.newFrame.focalLength}"
+                            oninput="updateFrameField('focalLength', this.value)"
+                        />
+                        <input
+                            type="text"
+                            list="aperture-list"
+                            placeholder="Aperture (e.g., 2.8)"
+                            value="${state.newFrame.aperture}"
+                            oninput="updateFrameField('aperture', this.value)"
+                        />
+                        <datalist id="aperture-list">
+                            <option value="1.2">
+                            <option value="1.4">
+                            <option value="1.8">
+                            <option value="2">
+                            <option value="2.8">
+                            <option value="4">
+                            <option value="5.6">
+                            <option value="8">
+                            <option value="11">
+                            <option value="16">
+                            <option value="22">
+                            <option value="32">
+                        </datalist>
+                        <input
+                            type="text"
+                            list="shutter-list"
+                            placeholder="Shutter (e.g., 1/125)"
+                            value="${state.newFrame.shutterSpeed}"
+                            oninput="updateFrameField('shutterSpeed', this.value)"
+                        />
+                        <datalist id="shutter-list">
+                            <option value="Bulb">
+                            <option value="1s">
+                            <option value="1/2">
+                            <option value="1/4">
+                            <option value="1/8">
+                            <option value="1/15">
+                            <option value="1/30">
+                            <option value="1/60">
+                            <option value="1/125">
+                            <option value="1/250">
+                            <option value="1/500">
+                            <option value="1/1000">
+                            <option value="1/2000">
+                        </datalist>
+                    </div>
+
+                    <textarea
+                        placeholder="Notes about this shot..."
+                        rows="4"
+                        oninput="updateFrameField('notes', this.value)"
+                    >${state.newFrame.notes}</textarea>
+
+                    <button class="btn-primary btn-save" onclick="addFrame()">
+                        ${icons.save}
+                        Save Frame
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderCameraView() {
+            return `
+                <div id="camera-view" class="camera-view">
+                    <div class="camera-controls">
+                        <button class="btn-ghost" onclick="stopCamera(); state.view='new-frame'; render();">
+                            ${icons.chevronLeft}
+                        </button>
+                        <button class="btn-ghost" onclick="toggleCamera()">
+                            ${icons.camera}
+                        </button>
+                    </div>
+                    
+                    <video id="camera-video" autoplay playsinline class="camera-video"></video>
+                    
+                    <div class="viewfinder-overlay">
+                        <div id="viewfinder-frame" class="viewfinder-frame">
+                            <div class="corner tl"></div>
+                            <div class="corner tr"></div>
+                            <div class="corner bl"></div>
+                            <div class="corner br"></div>
+                        </div>
+                        <div id="focal-indicator" class="focal-indicator" style="display: none;"></div>
+                    </div>
+                    
+                    <button class="btn-capture" onclick="capturePhoto()">
+                        <div class="capture-ring">
+                            <div class="capture-inner"></div>
+                        </div>
+                    </button>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (state.view === 'rolls') {
+                app.innerHTML = renderRollsList();
+            } else if (state.view === 'roll-detail') {
+                app.innerHTML = renderRollDetail();
+            } else if (state.view === 'new-frame') {
+                app.innerHTML = renderNewFrame();
+            }
+            
+            // Always render camera view (hidden by default)
+            let cameraView = document.getElementById('camera-view');
+            if (!cameraView) {
+                document.body.insertAdjacentHTML('beforeend', renderCameraView());
+            }
+        }
+
+        // Event handlers
+        function openRoll(rollId) {
+            state.currentRoll = state.rolls.find(r => r.id === rollId);
+            state.view = 'roll-detail';
+            render();
+        }
+
+        function backToRolls() {
+            state.currentRoll = null;
+            state.view = 'rolls';
+            render();
+        }
+
+        function updateRollTitle(value) {
+            if (state.currentRoll) {
+                state.currentRoll.title = value;
+                saveRoll(state.currentRoll);
+            }
+        }
+
+        function updateRollDate(value) {
+            if (state.currentRoll) {
+                state.currentRoll.date = value;
+                saveRoll(state.currentRoll);
+            }
+        }
+
+        function updateRollFilmType(value) {
+            if (state.currentRoll) {
+                state.currentRoll.filmType = value;
+                saveRoll(state.currentRoll);
+            }
+        }
+
+        function updateRollISO(value) {
+            if (state.currentRoll) {
+                state.currentRoll.iso = value;
+                saveRoll(state.currentRoll);
+            }
+        }
+
+        function startNewFrame() {
+            // Pre-populate with previous frame's settings if available
+            if (state.currentRoll && state.currentRoll.frames.length > 0) {
+                const lastFrame = state.currentRoll.frames[state.currentRoll.frames.length - 1];
+                state.newFrame = {
+                    frameNumber: '',
+                    focalLength: lastFrame.focalLength || '',
+                    aperture: lastFrame.aperture || '',
+                    shutterSpeed: lastFrame.shutterSpeed || '',
+                    notes: '',
+                    location: null,
+                    photo: null
+                };
+            }
+            state.view = 'new-frame';
+            render();
+        }
+
+        function cancelNewFrame() {
+            state.newFrame = {
+                frameNumber: '',
+                focalLength: '',
+                aperture: '',
+                shutterSpeed: '',
+                notes: '',
+                location: null,
+                photo: null
+            };
+            state.view = 'roll-detail';
+            render();
+        }
+
+        function updateFrameField(field, value) {
+            state.newFrame[field] = value;
+            if (field === 'focalLength') {
+                updateViewfinder();
+            }
+            // Handle bulb mode - ask for exposure time if not already specified
+            if (field === 'shutterSpeed' && value.toLowerCase() === 'bulb' && !value.includes('(')) {
+                setTimeout(() => {
+                    const exposureTime = prompt('Enter bulb exposure time (e.g., 2s, 30s, 2m):');
+                    if (exposureTime) {
+                        state.newFrame.shutterSpeed = `Bulb (${exposureTime})`;
+                        render();
+                    }
+                }, 100);
+            }
+        }
+
+        function retakePhoto() {
+            state.newFrame.photo = null;
+            render();
+        }
+
+        // Initialize
+        loadData();
+        render();
+    </script>
+</body>
+</html>
