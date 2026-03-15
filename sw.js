@@ -1,6 +1,7 @@
 const CACHE_NAME = 'film-companion-v1';
 const urlsToCache = [
-  './film-companion.html',
+  './',
+  './index.html',
   './manifest.json'
 ];
 
