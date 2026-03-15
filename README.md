@@ -4,7 +4,7 @@ Capture film photo settings on a phone to aid improving photography
 ## Using the App
 
 ### First Time Setup (Need WiFi)
-1. Open the URL on your phone
+1. Open the URL on your phone: https://fkpza.github.io/film-companion/
 2. **iOS**: Tap Share button → "Add to Home Screen"
 3. **Android**: Tap Menu (⋮) → "Add to Home Screen"
 4. Name it "Film Companion"
