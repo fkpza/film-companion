@@ -1,8 +1,12 @@
 # film-companion
 Capture film photo settings on a phone to aid improving photography
+
 Add a reference image taken with your phone camera to help link photo's to information
+
 Capture ISO, focal length, aperture and exposure time + notes
+
 Once set up, this should work without any network connection
+
 See below for Android and iOS setup (tested only with Android to date)
 
 ## Using the App
