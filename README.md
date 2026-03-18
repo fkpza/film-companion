@@ -1,4 +1,7 @@
 # film-companion
+
+## App written by Claude
+
 Capture film photo settings on a phone to aid improving photography
 
 Add a reference image taken with your phone camera to help link photo's to information
